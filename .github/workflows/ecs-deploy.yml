@@ -1,0 +1,28 @@
+name: Deploy to ECS
+
+on:
+  push:
+    tags:
+      - 'deploy-*'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: your-aws-region
+
+      - name: Deploy to ECS
+        run: |
+          aws ecs update-service --cluster your-cluster-name --service your-service-name --force-new-deployment
+
+      - name: Notify Deployment Success
+        if: success()
+        run: echo "Deployment successful!"

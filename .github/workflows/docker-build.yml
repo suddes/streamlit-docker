@@ -1,0 +1,45 @@
+name: Docker Build and Push
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Enter the name of the Environment to be deployed on'
+        required: true
+        type: string
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@5fd3084fc36e372ff1fff382a39b10d03659f355
+        with:
+              role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+              aws-region: us-east-1
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Build and push Docker image
+        run: |
+          docker build -t streamlit-app .
+          docker tag streamlit-app:latest ${{ steps.login-ecr.outputs.registry }}/streamlit-app:latest
+          docker push ${{ steps.login-ecr.outputs.registry }}/streamlit-app:latest
+
+      - name: Create a new tag
+        if: success()
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git tag deploy-$(date +'%Y%m%d%H%M%S')
+          git push origin --tags
