@@ -1,24 +1,20 @@
-FROM python:3.8-slim
+FROM python:3.10-slim
 
-# WORKDIR /app
+WORKDIR /app
 
-# Install any needed packages specified in requirements.txt
-COPY requirements.txt ./
+COPY requirements.txt ./requirements.txt
 
-# Install build dependencies for numpy
-# and other packages that require compilation
-RUN apt-get update && apt-get install -y \
-    build-essential \
-    python3-dev
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        ca-certificates \
+        netbase \
+        && rm -rf /var/lib/apt/lists/*
 
-# Install Python dependencies
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Copy the current directory contents into the container at /usr/src/app
-COPY . .
+RUN pip3 install -r requirements.txt
 
 EXPOSE 8501
 
-ENV PYTHONUNBUFFERED=1
+COPY . .
 
-CMD ["streamlit", "run", "app.py"]
+ENTRYPOINT ["streamlit", "run"]
+
+CMD ["main.py"]
