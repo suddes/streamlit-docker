@@ -32,9 +32,10 @@ jobs:
 
       - name: Build and push Docker image
         run: |
+          export DOCKER_BUILDKIT=1
           docker build -t streamlit-app .
-          docker tag streamlit-app:latest ${{ steps.login-ecr.outputs.registry }}/streamlit-app:latest
-          docker push ${{ steps.login-ecr.outputs.registry }}/streamlit-app:latest
+          docker tag streamlit-app:latest ${{ steps.login-ecr.outputs.registry }}/streamlit-app:${GITHUB_SHA}
+          docker push ${{ steps.login-ecr.outputs.registry }}/streamlit-app:${GITHUB_SHA}
 
       - name: Create a new tag
         if: success()
