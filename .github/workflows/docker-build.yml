@@ -31,11 +31,8 @@ jobs:
         uses: aws-actions/amazon-ecr-login@v1
 
       - name: Build Docker Image
-        env:
-          ECR_REPOSITORY: 642066724242.dkr.ecr.us-east-1.amazonaws.com
-          IMAGE_TAG: latest
         run: |
-          docker build -t $ECR_REPOSITORY:$IMAGE_TAG .
+          docker build -t web-app:latest .
 
       - name: Tag Docker Image
         env:
@@ -43,7 +40,7 @@ jobs:
           ECR_REPOSITORY: web-app
           IMAGE_TAG: latest
         run: |
-          docker tag $ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          docker tag web-app:latest $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
 
       - name: Push Docker Image to Amazon ECR
         env:
@@ -51,7 +48,7 @@ jobs:
           ECR_REPOSITORY: web-app
           IMAGE_TAG: latest
         run: |
-         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
 
       - name: Create a new tag
         if: success()
