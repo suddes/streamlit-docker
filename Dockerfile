@@ -1,20 +1,25 @@
-FROM python:3.10-slim
+FROM python:3.9-slim
+LABEL org.webiste='https://aws.amazon.com/'
+
+EXPOSE 8501
 
 WORKDIR /app
 
-COPY requirements.txt ./requirements.txt
+COPY requirements.txt ./
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
-        ca-certificates \
-        netbase \
-        && rm -rf /var/lib/apt/lists/*
+ENV PYTHONUNBUFFERED=TRUE
+ENV PYTHONDONTWRITEBYTECODE=TRUE
+ENV LANG C.UTF-8
 
-RUN pip3 install -r requirements.txt
+RUN apt-get update  \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
-EXPOSE 8501
+
+RUN pip install --no-cache-dir --upgrade pip && pip install -r requirements.txt --no-cache-dir
 
 COPY . .
 
 ENTRYPOINT ["streamlit", "run"]
 
-CMD ["main.py"]
+CMD ["app.py"]
