@@ -30,12 +30,28 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
 
-      - name: Build and push Docker image
+      - name: Build Docker Image
+        env:
+          ECR_REPOSITORY: 642066724242.dkr.ecr.us-east-1.amazonaws.com
+          IMAGE_TAG: latest
         run: |
-          export DOCKER_BUILDKIT=1
-          docker build -t streamlit-app .
-          docker tag streamlit-app:latest ${{ steps.login-ecr.outputs.registry }}/streamlit-app:${GITHUB_SHA}
-          docker push ${{ steps.login-ecr.outputs.registry }}/streamlit-app:${GITHUB_SHA}
+          docker build -t $ECR_REPOSITORY:$IMAGE_TAG .
+
+      - name: Tag Docker Image
+        env:
+          ECR_REGISTRY: 642066724242.dkr.ecr.us-east-1.amazonaws.com
+          ECR_REPOSITORY: web-app
+          IMAGE_TAG: latest
+        run: |
+          docker tag $ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+
+      - name: Push Docker Image to Amazon ECR
+        env:
+          ECR_REGISTRY: 642066724242.dkr.ecr.us-east-1.amazonaws.com
+          ECR_REPOSITORY: web-app
+          IMAGE_TAG: latest
+        run: |
+         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
 
       - name: Create a new tag
         if: success()
@@ -44,3 +60,49 @@ jobs:
           git config user.email github-actions@github.com
           git tag deploy-$(date +'%Y%m%d%H%M%S')
           git push origin --tags
+          
+
+name: Build and Push Docker Image to AWS ECR
+
+on:
+  push:
+    branches:
+      - main  # or any other branch you want to trigger the workflow
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Build Docker Image
+        env:
+          ECR_REPOSITORY: YOUR_ECR_REPOSITORY
+          IMAGE_TAG: YOUR_IMAGE_TAG
+        run: |
+          docker build -t $ECR_REPOSITORY:$IMAGE_TAG .
+
+      - name: Tag Docker Image
+        env:
+          ECR_REGISTRY: YOUR_AWS_ECR_REGISTRY
+          ECR_REPOSITORY: YOUR_ECR_REPOSITORY
+          IMAGE_TAG: YOUR_IMAGE_TAG
+        run: |
+          docker tag $ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+
+      - name: Push Docker Image to Amazon ECR
+        env:
+          ECR_REGISTRY: YOUR_AWS_ECR_REGISTRY
+          ECR_REPOSITORY: YOUR_ECR_REPOSITORY
+          IMAGE_TAG: YOUR_IMAGE_TAG
+        run: |
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+
+      - name: Verify pushed image
+        run: |
+          echo "Image pushed to $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
