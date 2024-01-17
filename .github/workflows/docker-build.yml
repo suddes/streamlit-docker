@@ -28,6 +28,10 @@ jobs:
           aws-region: ${{secrets.AWS_REGION}}
 
       - name: Login to Amazon ECR
+        id: login-pf-aws-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Login to Amazon ECR
         run: |
           aws ecr get-login-password | docker login --username AWS --password-stdin ${{ secrets.AWS_ECR_REPO }}
 
