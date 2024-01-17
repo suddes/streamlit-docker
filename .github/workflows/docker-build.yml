@@ -7,6 +7,7 @@ on:
         description: 'Enter the name of the Environment to be deployed on'
         required: true
         type: string
+        default: dev
 
 permissions:
   id-token: write
@@ -27,18 +28,15 @@ jobs:
               aws-region: us-east-1
 
       - name: Login to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v1
-
-      - name: Build and push the tagged docker image to Amazon ECR
-        id: containerImage
-        env:
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          ECR_REPOSITORY: ${{secrets.AWS_ECR_REPO}}
-          IMAGE_TAG: latest
         run: |
-          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          aws ecr get-login-password | docker login --username AWS --password-stdin ${{ secrets.AWS_ECR_REPO }}
+
+      - name: Build, Tag, and Push Docker image to ECR
+        id: containerImage
+        run: |
+          docker build -t my-image .
+          docker tag my-image:latest ${{ secrets.AWS_ECR_REPO }}:latest
+          docker push ${{ secrets.AWS_ECR_REPO }}:latest
 
       - name: ECR Status Check
         if: steps.containerImage.outcome == 'failure'
